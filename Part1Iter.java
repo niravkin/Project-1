@@ -125,20 +125,25 @@ public class Part1Iter {
 		
 		public Node findNextIter(int value) {
 			if (root == null) return null;
-			//keep track of parent, curr, and next nodes
+			//keep track of curr and next nodes
 			Node curr = root;
 			Node next = null;			
 			while (curr != null) {
 				if (value == curr.val) {
+					//if the node has a right child, its inorder sucessor is the minimum in its right subtree
 					if (curr.right != null) {
 						return findMinIter(curr.right);
-					} else {
+					}
+					//otherwise, return the next node we kept track of
+					else {
 						return next;
 					}
 				} else if (value < curr.val) {
+					//when traversing left, change next to curr, so it is the new curr's parent
 					next = curr;
 					curr = curr.left;
 				} else if (value > curr.val) {
+					//when traversing right, do not change next
 					curr = curr.right;
 				}
 			}
@@ -148,7 +153,7 @@ public class Part1Iter {
 		
 		public Node findPrevIter(int value) {
 			if (root == null) return null;
-			//keep track of parent, curr, and next nodes
+			//keep track of curr and prev nodes
 			Node curr = root;
 			Node prev = null;			
 			while (curr != null) {
@@ -179,6 +184,7 @@ public class Part1Iter {
 		}
 		
 		public Node findMinIter() {
+			//find leftmost node
 			Node curr = root;
 			if (curr == null) return null;
 			while (curr.left != null) {
@@ -197,6 +203,7 @@ public class Part1Iter {
 		}
 		
 		public Node findMaxIter() {
+			//find rightmost node
 			Node curr = root;
 			if (curr == null) return null;
 			while (curr.right != null) {
