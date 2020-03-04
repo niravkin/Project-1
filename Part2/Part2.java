@@ -347,7 +347,6 @@ public class Part2 {
 			return findMaxIter(root);
 		}
 		
-		/*
 		public void print() {
 			//prints in level order, prints null if there exists a parent, but no child
 			Queue<Node> nodes = new LinkedList<Node>();
@@ -364,56 +363,6 @@ public class Part2 {
 			}
 			System.out.println();
 		}	
-		*/
-		
-		//print function to visualize tree from: https://stackoverflow.com/questions/4965335/how-to-print-binary-tree-diagram
-		private void printTree(List<Node> levelNodes, int level) {
-
-			   List<Node> nodes = new ArrayList<Node>();
-
-			   //indentation for first node in given level
-			   printIndentForLevel(level);
-
-			   for (Node treeNode : levelNodes) {
-
-			       //print node data
-			       System.out.print(treeNode == null?" ":treeNode.val);
-
-			       //spacing between nodes
-			       printSpacingBetweenNodes(level);
-
-			       //if its not a leaf node
-			       if(level>1){
-			           nodes.add(treeNode == null? null:treeNode.left);
-			           nodes.add(treeNode == null? null:treeNode.right);
-			       }
-			   }
-			   System.out.println();
-
-			   if(level>1){        
-			       printTree(nodes, level-1);
-			   }
-			}
-
-			private void printIndentForLevel(int level){
-			   for (int i = (int) (Math.pow(2,level-1)); i >0; i--) {
-			       System.out.print(" ");
-			   }
-			}
-
-			private void printSpacingBetweenNodes(int level){
-			   //spacing between nodes
-			   for (int i = (int) ((Math.pow(2,level-1))*2)-1; i >0; i--) {
-			       System.out.print(" ");
-			   }
-			}
-
-			public void print() {
-			   List<Node> list = new ArrayList<Node>();
-			   list.add(root);
-			   printTree(list, root.height);
-			}
-
 	}
 	
 	public static void main(String[] args) {
