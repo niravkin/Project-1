@@ -14,35 +14,7 @@ public class Part2Rec {
 	
 	public static class AVLRec {
 		public Node root;
-		
-		private void setNull(int value, Node n) {
-			//only used to set leaves to null
-			//every leaf must have a parent, except if the root is a leaf
-			if (n == root && n.val == value) {
-				root = null;
-			}
-			while(n != null) {
-				if (n.right != null) {
-					if (n.right.val == value) {
-						n.right = null;
-						return;
-					}
-				}
-				if (n.left != null) {
-					if (n.left.val == value) {
-						n.left = null;
-						return;
-					}
-				}
-				
-				if (value < n.val) {
-					n = n.left;
-				} else {
-					n = n.right;
-				}
-			}
-		}
-		
+
 		private Node getParent(Node n) {
 			Node curr = root;
 			while(curr != null) {
@@ -57,40 +29,39 @@ public class Part2Rec {
 			return null;
 		}
 		
-		private void balance(Node c) {
-				int balanceFactor = bf(c);
-				if (Math.abs(balanceFactor) > 1) {
-					//node is not balanced
-					Node parent = getParent(c);
-					//determine which case we are in:
-					if (balanceFactor > 0) {
-						//left heavy, so we are guaranteed to have a left child
-						if ((bf(c.left)) >= 0) {
-							//System.out.println("LEFT LEFT");
-							//left left, right rotate on c
-							rightRotate(c, parent);
-						} else {
-							//System.out.println("LEFT RIGHT");
-							//left right, left rotate left child, right rotate c
-							leftRotate(c.left, c);
-							rightRotate(c, parent);
-						}
+		private void balance(Node c, Node parent) {
+			int balanceFactor = bf(c);
+			if (Math.abs(balanceFactor) > 1) {
+				//node is not balanced
+				//determine which case we are in:
+				if (balanceFactor > 0) {
+					//left heavy, so we are guaranteed to have a left child
+					if ((bf(c.left)) >= 0) {
+						//System.out.println("LEFT LEFT");
+						//left left, right rotate on c
+						rightRotate(c, parent);
 					} else {
-						//right heavy, so we are guaranteed to have a right child
-						if (bf(c.right) <= 0) {
-							//System.out.println("RIGHT RIGHT");
-							//right right, left rotate on c
-							leftRotate(c, parent);
-						} else {
-							//System.out.println("RIGHT LEFT");
-							//right left, right rotate right child, left rotate c
-							rightRotate(c.right, c);
-							leftRotate(c, parent);
-						}
+						//System.out.println("LEFT RIGHT");
+						//left right, left rotate left child, right rotate c
+						leftRotate(c.left, c);
+						rightRotate(c, parent);
+					}
+				} else {
+					//right heavy, so we are guaranteed to have a right child
+					if (bf(c.right) <= 0) {
+						//System.out.println("RIGHT RIGHT");
+						//right right, left rotate on c
+						leftRotate(c, parent);
+					} else {
+						//System.out.println("RIGHT LEFT");
+						//right left, right rotate right child, left rotate c
+						rightRotate(c.right, c);
+						leftRotate(c, parent);
 					}
 				}
-				//even if the node did not need rebalancing, its height might need to be updated
-				updateHeight(c);
+			}
+			//even if the node did not need rebalancing, its height might need to be updated
+			updateHeight(c);
 		}
 		
 		private void rightRotate(Node n, Node parent) {
@@ -119,7 +90,7 @@ public class Part2Rec {
 			}
 		}
 		
-		public void leftRotate(Node n, Node parent) {
+		private void leftRotate(Node n, Node parent) {
 			//left rotate Node n
 			//System.out.println("left rotating " + n.val);
 			boolean nisroot = false;
@@ -171,15 +142,14 @@ public class Part2Rec {
 			n.height = Math.max(left, right) + 1;
 		}
 		
-		
-		private void insertRecHelper(int value, Node n) {
+		private void insertRecHelper(int value, Node n, Node parent) {
 			if (value > n.val) {
 				//insert to right
 				if (n.right == null) {
 					n.right = new Node(value);
 				} else {
 					//recursive call
-					insertRecHelper(value, n.right);
+					insertRecHelper(value, n.right, n);
 				}
 			} else {
 				//insert to left
@@ -187,11 +157,11 @@ public class Part2Rec {
 					n.left = new Node(value);
 				} else {
 					//recursive call		
-					insertRecHelper(value, n.left);
+					insertRecHelper(value, n.left, n);
 				}
 			}
 			updateHeight(n);
-			balance(n);
+			balance(n, parent);
 			if (Math.abs(bf(n)) > 1) {
 				System.out.println("Node " + n.val + " has balance factor " + bf(n) + " and needs rebalancing.");
 			}
@@ -202,11 +172,11 @@ public class Part2Rec {
 			if (root == null) {
 				root = new Node(value);
 			} else {
-				insertRecHelper(value, root);
+				insertRecHelper(value, root, null);
 			}
 		}
 		
-		private void deleteRecHelper(int value, Node n) {
+		private void deleteRecHelper(int value, Node n, Node parent) {
 			if (n == null) {
 				//the value is not in the tree
 				return;
@@ -214,8 +184,16 @@ public class Part2Rec {
 			if (n.val == value) {
 				//ready to delete
 				if (n.left == null && n.right == null) {
-					setNull(n.val, root);
-					return;
+					if (parent == null) { 
+						root = null;
+						return;
+					} else {
+						if (n.val < parent.val) {
+							parent.left = null;
+						} else {
+							parent.right = null;
+						}
+					}
 				} else if (n.right != null && n.left == null) {
 					//change left and right pointers to point to child's left and right pointers
 					//change value to child's value
@@ -232,26 +210,27 @@ public class Part2Rec {
 					n.val = temp.val;
 				} else {
 					Node successor = findNextRec(value);
+					Node p = getParent(successor);
 					int successorVal = successor.val;
 					//System.out.println("Successor: " + successor.val);
 					//copy successor to n, delete successor
-					deleteRecHelper(successorVal, n);
+					deleteRecHelper(successorVal, n, p);
 					n.val = successorVal;
 				}
 			} else {
 				//recursive search
 				if (value < n.val) {
-					deleteRecHelper(value, n.left);
+					deleteRecHelper(value, n.left, n);
 				} else {
-					deleteRecHelper(value, n.right);
+					deleteRecHelper(value, n.right, n);
 				}
 			}
 			updateHeight(n);
-			balance(n);
+			balance(n, parent);
 		}
 		
 		public void deleteRec(int value) {
-			deleteRecHelper(value, root);
+			deleteRecHelper(value, root, null);
 		}
 		
 		private void findNextRecHelper(int value, Node n, Stack<Node> s) {
@@ -324,54 +303,23 @@ public class Part2Rec {
 			return findMaxRecHelper(root);
 		}
 		
-		
-		//print function to visualize tree from: https://stackoverflow.com/questions/4965335/how-to-print-binary-tree-diagram
-		private void printTree(List<Node> levelNodes, int level) {
-
-			   List<Node> nodes = new ArrayList<Node>();
-
-			   //indentation for first node in given level
-			   printIndentForLevel(level);
-
-			   for (Node treeNode : levelNodes) {
-
-			       //print node data
-			       System.out.print(treeNode == null?" ":treeNode.val);
-
-			       //spacing between nodes
-			       printSpacingBetweenNodes(level);
-
-			       //if its not a leaf node
-			       if(level>1){
-			           nodes.add(treeNode == null? null:treeNode.left);
-			           nodes.add(treeNode == null? null:treeNode.right);
-			       }
-			   }
-			   System.out.println();
-
-			   if(level>1){        
-			       printTree(nodes, level-1);
-			   }
-			}
-
-		private void printIndentForLevel(int level){
-		   for (int i = (int) (Math.pow(2,level-1)); i >0; i--) {
-		       System.out.print(" ");
-		   }
-		}
-
-		private void printSpacingBetweenNodes(int level){
-		   //spacing between nodes
-		   for (int i = (int) ((Math.pow(2,level-1))*2)-1; i >0; i--) {
-		       System.out.print(" ");
-		   }
-		}
-
 		public void print() {
-		   List<Node> list = new ArrayList<Node>();
-		   list.add(root);
-		   printTree(list, root.height);
+			//prints in level order, prints null if there exists a parent, but no child
+			Queue<Node> nodes = new LinkedList<Node>();
+			nodes.add(root);
+			while(!nodes.isEmpty()) {
+				Node n = nodes.poll();
+				if (n == null) {
+					System.out.print("null ");
+					continue;
+				}
+				System.out.print(n.val + " ");
+				nodes.add(n.left);
+				nodes.add(n.right);
+			}
+			System.out.println();
 		}
+
 	}
 	
 	public static void main(String[] args) {
@@ -406,7 +354,5 @@ public class Part2Rec {
 		System.out.println("Deleting 1:");
 		avl3.deleteRec(1);
 		avl3.print();
-		
-		
 	}
 }
